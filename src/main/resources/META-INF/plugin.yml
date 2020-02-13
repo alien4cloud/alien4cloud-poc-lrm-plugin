@@ -1,0 +1,19 @@
+id: alien4cloud-poc-lrm-plugin
+name: Lightweight relationship management plugin
+version: ${project.version}
+description: >
+  This plugin able us to use lightweight relationship that are all resolved before runtime.
+configuration_class: alien4cloud.poc.plugin.lrm.PluginConfiguration
+component_descriptors:
+  - bean_name: alien4cloud-poc-lrm-modifier
+    name: Lightweight relationship modifier
+    description: >
+      Do stuff with relationships
+  - bean_name: alien4cloud-poc-mls-post-modifier
+    name: MLS Like modifier (Post)
+    description: >
+      Simulate a modifier that manage credential for modules (Post)
+  - bean_name: alien4cloud-poc-mls-pre-modifier
+    name: MLS Like modifier (Pre)
+    description: >
+      Simulate a modifier that manage credential for modules (Pre)

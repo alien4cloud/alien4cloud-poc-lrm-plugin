@@ -1,0 +1,95 @@
+
+tosca_definitions_version: alien_dsl_2_0_0
+
+metadata:
+  template_name: org.alien4cloud.poc.lrm.topologie.LightweightRelationshipSampleUsage
+  template_version: 3.0.0-SNAPSHOT
+  template_author: alien4cloud
+
+imports:
+  - tosca-normative-types:1.0.0-ALIEN20
+  - yorc-types:1.1.0
+  - org.alien4cloud.poc.lrm:3.0.0-SNAPSHOT
+
+description: >
+  A sample topology to illustrate usage of lightweight relationships.
+
+topology_template:
+  node_templates:
+    MyDb:
+      metadata:
+        a4c_edit_x: 325
+        a4c_edit_y: 9
+      type: org.alien4cloud.poc.lrm.mydb.nodes.MyDb
+      capabilities:
+        datastore_endpoint:
+          properties:
+            protocol: tcp
+            secure: false
+            network_name: PRIVATE
+            initiator: source
+    MyHdfs:
+      metadata:
+        a4c_edit_x: 328
+        a4c_edit_y: "-83"
+      type: org.alien4cloud.poc.lrm.hdfs.nodes.MyHdfs
+      capabilities:
+        datastore_endpoint:
+          properties:
+            protocol: tcp
+            secure: false
+            network_name: PRIVATE
+            initiator: source
+    SpecificDbClient:
+      metadata:
+        a4c_edit_x: 9
+        a4c_edit_y: 109
+      type: org.alien4cloud.poc.lrm.dbclient.nodes.SpecificDbClient
+      requirements:
+        - myDbRelationshipMyDbDatastore_endpoint:
+            type_requirement: ds_endpoint
+            node: MyDb
+            capability: org.alien4cloud.poc.lrm.mydb.capabilities.MyDbEndpoint
+            relationship: org.alien4cloud.poc.lrm.mydb.relationships.MyDbRelationship
+            properties:
+              var_mapping:
+                ip_address: "DB_IP"
+                port: "DB_PORT"
+                database_name: "DB_NAME"
+                username: "DB_USR"
+                password: "DB_PWD"
+      artifacts:
+        config:
+          file: config/SpecificDbClient.conf
+          type: tosca.artifacts.File
+    StandardClient:
+      metadata:
+        a4c_edit_x: "-26"
+        a4c_edit_y: "-20"
+      type: org.alien4cloud.poc.lrm.pub.nodes.ConfigurableStandardClient
+      requirements:
+        - datastoreRelationshipMyDbDatastore_endpoint:
+            type_requirement: ds_endpoint
+            node: MyDb
+            capability: org.alien4cloud.poc.lrm.mydb.capabilities.MyDbEndpoint
+            relationship: org.alien4cloud.poc.lrm.mydb.relationships.MyDbRelationship
+            properties:
+              var_mapping:
+                username: USERNAME
+                password: PASSWORD
+                ip_address: "MY_DB_IP"
+                port: "MY_DB_PORT"
+                database_name: "MY_DB_NAME,MY_DATABASE_NAME"
+        - datastoreRelationshipMyHdfsDatastore_endpoint:
+            type_requirement: ds_endpoint
+            node: MyHdfs
+            capability: org.alien4cloud.poc.lrm.hdfs.capabilities.MyHdfsEndpoint
+            relationship: org.alien4cloud.poc.lrm.hdfs.relationships.MyHdfsRelationship
+            properties:
+              var_mapping:
+                ip_address: "HDFS_IP"
+                folder_path: "HDFS_PATH"
+      artifacts:
+        config:
+          file: config/StandardClient.conf
+          type: tosca.artifacts.File

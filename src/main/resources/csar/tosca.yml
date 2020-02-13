@@ -1,0 +1,199 @@
+tosca_definitions_version: alien_dsl_2_0_0
+
+metadata:
+  template_name: org.alien4cloud.poc.lrm
+  template_version: 3.0.0-SNAPSHOT
+  template_author: alien4cloud
+
+imports:
+  - tosca-normative-types:1.0.0-ALIEN20
+  - yorc-types:1.1.0
+
+description: >
+  Mock types for A4C load tests.
+
+data_types:
+
+  org.alien4cloud.poc.lrm.pub.data.VarMapping:
+    derived_from: tosca.datatypes.Root
+    properties:
+      ip_address:
+        type: string
+        required: false
+      protocol:
+        type: string
+        required: false
+      port:
+        type: string
+        required: false
+      username:
+        type: string
+        required: false
+      password:
+        type: string
+        required: false
+      url_path:
+        type: string
+        required: false
+
+  org.alien4cloud.poc.lrm.mydb.data.VarMapping:
+    derived_from: org.alien4cloud.poc.lrm.pub.data.VarMapping
+    properties:
+      database_name:
+        type: string
+        required: false
+
+  org.alien4cloud.poc.lrm.hdfs.data.VarMapping:
+    derived_from: org.alien4cloud.poc.lrm.pub.data.VarMapping
+    properties:
+      folder_path:
+        type: string
+        required: false
+
+capability_types:
+
+  org.alien4cloud.poc.lrm.pub.capabilities.DatastoreEndpoint:
+    derived_from: tosca.capabilities.Endpoint
+    abstract: true
+    properties:
+      ip_address:
+        type: string
+        required: false
+      username:
+        type: string
+        required: false
+      password:
+        type: string
+        required: false
+
+  org.alien4cloud.poc.lrm.mydb.capabilities.MyDbEndpoint:
+    derived_from: org.alien4cloud.poc.lrm.pub.capabilities.DatastoreEndpoint
+    abstract: false
+    properties:
+      database_name:
+        type: string
+        required: false
+
+  org.alien4cloud.poc.lrm.hdfs.capabilities.MyHdfsEndpoint:
+    derived_from: org.alien4cloud.poc.lrm.pub.capabilities.DatastoreEndpoint
+    abstract: false
+    properties:
+      folder_path:
+        type: string
+        required: false
+
+node_types:
+
+  org.alien4cloud.poc.lrm.pub.nodes.DataStore:
+    abstract: true
+    derived_from: tosca.nodes.Root
+    description: |
+      A generic component that represents a datastore. All share expose a DatastoreEndpoint.
+    capabilities:
+      datastore_endpoint:
+        type: org.alien4cloud.poc.lrm.pub.capabilities.DatastoreEndpoint
+        occurrences: [0, unbounded]
+
+  org.alien4cloud.poc.lrm.pub.nodes.AbstractStandardClient:
+    derived_from: tosca.nodes.Root
+    abstract: true
+    description: |
+      An abstract client that have un unbounded requirement to any DatastoreEndpoint.
+    properties:
+      var_values:
+        type: map
+        required: false
+        description: This map will be filled by a modifier and will contain var_name -> var_value.
+        entry_schema:
+          type: string
+    requirements:
+      - ds_endpoint:
+          capability: org.alien4cloud.poc.lrm.pub.capabilities.DatastoreEndpoint
+          relationship: org.alien4cloud.poc.lrm.pub.relationships.DatastoreRelationship
+          occurrences: [0, unbounded]
+
+  org.alien4cloud.poc.lrm.pub.nodes.ConfigurableStandardClient:
+    derived_from: org.alien4cloud.poc.lrm.pub.nodes.AbstractStandardClient
+    description: |
+      A client that can be configured using a jinja2 template.
+      The file path, after replacement of vars, will be available as an attribute.
+    attributes:
+      config_file_path: { get_operation_output: [SELF, Standard, configure, CONFIG_FILE_PATH] }
+    interfaces:
+      Standard:
+        configure:
+          inputs:
+            var_values: { get_property: [ SELF, var_values ] }
+          implementation: playbook/configure.yml
+        start:
+          inputs:
+            config_file_path: { get_attribute: [ SELF, config_file_path ] }
+          implementation: scripts/start.sh
+    artifacts:
+      - config:
+          file: config.properties
+          type: tosca.artifacts.File
+
+
+
+  org.alien4cloud.poc.lrm.mydb.nodes.MyDb:
+    abstract: true
+    derived_from: org.alien4cloud.poc.lrm.pub.nodes.DataStore
+    capabilities:
+      datastore_endpoint:
+        type: org.alien4cloud.poc.lrm.mydb.capabilities.MyDbEndpoint
+        occurrences: [0, unbounded]
+
+  org.alien4cloud.poc.lrm.hdfs.nodes.MyHdfs:
+    abstract: true
+    derived_from: org.alien4cloud.poc.lrm.pub.nodes.DataStore
+    capabilities:
+      datastore_endpoint:
+        type: org.alien4cloud.poc.lrm.hdfs.capabilities.MyHdfsEndpoint
+        occurrences: [0, unbounded]
+
+
+  org.alien4cloud.poc.lrm.dbclient.nodes.SpecificDbClient:
+    derived_from: org.alien4cloud.poc.lrm.pub.nodes.ConfigurableStandardClient
+    artifacts:
+      - config:
+          file: config.properties
+          type: tosca.artifacts.File
+    requirements:
+      - ds_endpoint:
+          capability: org.alien4cloud.poc.lrm.mydb.capabilities.MyDbEndpoint
+          relationship: org.alien4cloud.poc.lrm.mydb.relationships.MyDbRelationship
+          occurrences: [1, 1]
+
+
+relationship_types:
+
+  org.alien4cloud.poc.lrm.pub.relationships.DatastoreRelationship:
+    derived_from: tosca.relationships.ConnectsTo
+    abstract: true
+    description: |
+      A generic relationship that has a complex property to store the mapping between endpoint property and var names.
+    valid_target_types: [ org.alien4cloud.poc.lrm.pub.capabilities.DatastoreEndpoint ]
+    properties:
+      var_mapping:
+        type: org.alien4cloud.poc.lrm.pub.data.VarMapping
+        required: false
+        description: Here is the mapping beetween target properties and variables of your config file.
+
+  org.alien4cloud.poc.lrm.mydb.relationships.MyDbRelationship:
+    derived_from: org.alien4cloud.poc.lrm.pub.relationships.DatastoreRelationship
+    abstract: false
+    valid_target_types: [ org.alien4cloud.poc.lrm.mydb.capabilities.MyDbEndpoint ]
+    properties:
+      var_mapping:
+        type: org.alien4cloud.poc.lrm.mydb.data.VarMapping
+        required: false
+
+  org.alien4cloud.poc.lrm.hdfs.relationships.MyHdfsRelationship:
+    derived_from: org.alien4cloud.poc.lrm.pub.relationships.DatastoreRelationship
+    abstract: false
+    valid_target_types: [ org.alien4cloud.poc.lrm.hdfs.capabilities.MyHdfsEndpoint ]
+    properties:
+      var_mapping:
+        type: org.alien4cloud.poc.lrm.hdfs.data.VarMapping
+        required: false
