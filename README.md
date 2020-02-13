@@ -48,3 +48,13 @@ db_url: {{ _.MY_DB_IP }}:{{ _.MY_DB_PORT }}/{{ _.MY_DB_NAME }}
 hdfs_url: {{ _.HDFS_IP }}/{{ _.HDFS_PATH }}
 ```
 
+This is very interesting since you can use the power of templating in your configuration files in order to implements some logic.
+As an example, we put a loop in the config file of the SpecificDbClient : 
+
+```
+{% for i in range(10) %}
+DB_URL{{i}}:  {{ _.DB_USR }}:{{ _.DB_PWD }}@{{ _.DB_IP }}:{{ _.DB_PORT }}/{{ _.DB_NAME }}
+{% endfor %}
+```
+
+
