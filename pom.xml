@@ -9,7 +9,7 @@
     </parent>
 
     <artifactId>alien4cloud-poc-lrm-plugin</artifactId>
-    <name>Spark Jobs on K8S Plugin</name>
+    <name>POC : Lightweight Relationship Management</name>
     <version>3.0.0-SNAPSHOT</version>
 
     <properties>
