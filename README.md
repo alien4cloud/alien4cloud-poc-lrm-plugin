@@ -57,4 +57,5 @@ DB_URL{{i}}:  {{ _.DB_USR }}:{{ _.DB_PWD }}@{{ _.DB_IP }}:{{ _.DB_PORT }}/{{ _.D
 {% endfor %}
 ```
 
+Our implementation of our [configure](src/main/resources/csar/playbook/configure.yml) operation is quite simple. 
 

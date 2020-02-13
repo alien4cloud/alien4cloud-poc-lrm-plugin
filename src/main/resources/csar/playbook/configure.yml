@@ -5,25 +5,9 @@
 
   tasks:
 
-    # - name: Debug var names
-    #   debug:
-    #     var: var_names
-
-    # - name: Debug config
-    #   debug:
-    #     var: config
-
     - name: Define a var named _ that contains the var values
       set_fact:
         _: "{{ var_values | from_yaml }}"
-
-    # - name: Filter metaproperties (remove exiting one from the list, based on name and target)
-    #   set_fact:
-    #     vars: "{{ vars |combine(_) }}"
-
-    # - name: Debug all var
-    #   debug:
-    #     var: vars
 
     - name: Create temporary file to store config file
       tempfile:
